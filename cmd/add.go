@@ -26,18 +26,33 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		name := args[0]
 		client := lib.CreateClient()
-		file_buffer, _ := lib.GetFileBuffer(name)
-		size, _ := lib.GetFileSize(name)
-		blob, _ := client.CreateBlobObject(file_buffer, size)
-		_, hash, _ := blob.ToFile()
 		if !client.IndexIsExist() {
 			init_index := client.InitIndexObject()
 			init_index.ToFile()
 		}
-		index_buffer, _ := lib.GetFileBuffer(client.IndexPath)
-		index, _ := client.GetIndexObject(index_buffer)
-		index, _ = index.UpdateIndex(name, hash)
-		index.ToFile()
+
+		if name == "." {
+			working_file_paths, _ := client.WalkingDir()
+			index_buffer, _ := lib.GetFileBuffer(client.IndexPath)
+			index, _ := client.GetIndexObject(index_buffer)
+			for _, working_file_path := range working_file_paths {
+				file_buffer, _ := lib.GetFileBuffer(working_file_path)
+				size, _ := lib.GetFileSize(working_file_path)
+				blob, _ := client.CreateBlobObject(file_buffer, size)
+				_, hash, _ := blob.ToFile()
+				index, _ = index.UpdateIndex(working_file_path, hash)
+			}
+			index.ToFile()
+		} else {
+			file_buffer, _ := lib.GetFileBuffer(name)
+			size, _ := lib.GetFileSize(name)
+			blob, _ := client.CreateBlobObject(file_buffer, size)
+			_, hash, _ := blob.ToFile()
+			index_buffer, _ := lib.GetFileBuffer(client.IndexPath)
+			index, _ := client.GetIndexObject(index_buffer)
+			index, _ = index.UpdateIndex(name, hash)
+			index.ToFile()
+		}
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		/** 引数のバリデーションを行うことができる */

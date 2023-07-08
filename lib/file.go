@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func GetFileBuffer(file_path string) ([]byte, error) {
@@ -74,9 +76,25 @@ func CreateFile(file_path string, buffer []byte) (int, error) {
 	return byte_size, nil
 }
 
-func (c *Client) IndexIsExist() bool {
-	if _, err := os.Stat(c.IndexPath); err != nil {
-		return false
+func (c *Client) WalkingDir() ([]string, error) {
+	if _, err := os.Stat(c.WorkPath); err != nil {
+		return nil, err
 	}
-	return true
+	paths := make([]string, 0)
+	err := filepath.Walk(c.WorkPath, func(path string, info os.FileInfo, err error) error {
+		rel_path, err := filepath.Rel(c.WorkPath, path)
+		if info.IsDir() {
+			if strings.HasPrefix(rel_path, ".rabbit") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		paths = append(paths, rel_path)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return paths, nil
+
 }

@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -20,6 +21,11 @@ func (c *Client) Init() error {
 	}
 	if err := os.MkdirAll(c.RepoPath+"/refs/heads", os.ModePerm); err != nil {
 		return err
+	}
+	empty_buffer := []byte("ref: ref/heads/master\n")
+	_, err := CreateFile(c.HeadPath, empty_buffer)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	return nil

@@ -247,3 +247,19 @@ func (index *Index) ToFile() error {
 
 	return nil
 }
+
+func (c *Client) IndexIsExist() bool {
+	if _, err := os.Stat(c.IndexPath); err != nil {
+		return false
+	}
+	return true
+}
+
+func (index *Index) GetHash(name string) (string, error) {
+	for _, entry := range index.Entries {
+		if name == entry.Name {
+			return entry.Hash, nil
+		}
+	}
+	return "", errors.New("Invalid Name")
+}

@@ -26,7 +26,9 @@ to quickly create a Cobra application.`,
 		client := lib.CreateClient()
 		buffer, _ := lib.GetFileBuffer(client.IndexPath)
 		index, _ := client.GetIndexObject(buffer)
-		fmt.Println(index.Entries)
+		for _, entry := range index.Entries {
+			fmt.Println("Name:", entry.Name, "Hash:", entry.Hash)
+		}
 	},
 }
 
