@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -22,11 +21,11 @@ func (c *Client) Init() error {
 	if err := os.MkdirAll(c.RepoPath+"/refs/heads", os.ModePerm); err != nil {
 		return err
 	}
-	empty_buffer := []byte("ref: ref/heads/master\n")
-	_, err := CreateFile(c.HeadPath, empty_buffer)
-	if err != nil {
-		fmt.Println(err)
-	}
+	init_head_buffer := []byte("ref: refs/heads/master\n")
+	_, _ = CreateFile(c.HeadPath, init_head_buffer)
+
+	init_refs_heads_master_buffer := []byte("")
+	_, _ = CreateFile(c.RepoPath+"/refs/heads/master", init_refs_heads_master_buffer)
 
 	return nil
 }

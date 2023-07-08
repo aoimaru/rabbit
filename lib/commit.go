@@ -40,7 +40,7 @@ func (c *Client) CreateCommitObject(message string, hash string) Commit {
 
 	commit.Message = message
 
-	parent_hash, _ := c.GetHeadRef()
+	parent_hash, _ := c.GetHeadHash()
 	commit.Parents = append(commit.Parents, Parent{Hash: parent_hash})
 	commit.RepoPath = c.RepoPath
 

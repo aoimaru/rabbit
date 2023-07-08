@@ -5,8 +5,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/aoimaru/rabbit/lib"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +20,10 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("updateRef called")
+		refs, _ := cmd.Flags().GetString("refs")
+		hash, _ := cmd.Flags().GetString("hash")
+		client := lib.CreateClient()
+		_ = client.UpdateRef(refs, hash)
 	},
 }
 
@@ -37,4 +39,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// updateRefCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	updateRefCmd.Flags().StringP("refs", "r", "", "set refs")
+	updateRefCmd.Flags().StringP("hash", "s", "", "set hash")
 }

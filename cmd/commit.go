@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/aoimaru/rabbit/lib"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,19 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("commit called")
+		message, _ := cmd.Flags().GetString("message")
+		client := lib.CreateClient()
+		index_buffer, _ := lib.GetFileBuffer(client.IndexPath)
+		index, _ := client.GetIndexObject(index_buffer)
+		node, _ := index.CreateNodes()
+		hash := client.WriteTree(node)
+		commit := client.CreateCommitObject(message, hash)
+		commit.ToFile()
+		refs := client.GetHeadRef()
+		err := client.UpdateRef(refs, hash)
+		if err != nil {
+			fmt.Println(err)
+		}
 	},
 }
 
@@ -37,4 +50,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// commitCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	commitCmd.Flags().StringP("message", "m", "", "set file message")
 }
