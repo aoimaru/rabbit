@@ -111,9 +111,7 @@ func (c *Client) GetIndexObject(buffer []byte) (Index, error) {
 
 func (index *Index) UpdateIndex(name string, hash string) (Index, error) {
 	file_path := index.WorkPath + "/" + name
-	// fmt.Println("<---debug::lib/UpdateIndex::file_path--->")
-	// fmt.Println("index.WorkPath:", index.WorkPath)
-	// fmt.Println("file_path:", file_path)
+
 	var system_call syscall.Stat_t
 	syscall.Stat(file_path, &system_call)
 
@@ -169,6 +167,21 @@ func (index *Index) UpdateIndex(name string, hash string) (Index, error) {
 	fmt.Println("new_index:", new_index)
 
 	return new_index, nil
+}
+
+func (index *Index) RollBackIndex(blob_columns []Column) Index {
+	var roll_back_index Index
+	for _, blob_column := range blob_columns {
+		entry, _ := blob_column.ToEntry()
+		// fmt.Printf("%+v\n", entry)
+		roll_back_index.Entries = append(roll_back_index.Entries, entry)
+	}
+	roll_back_index.Dirc = "DIRC"
+	roll_back_index.Version = 2
+	roll_back_index.Number = uint32(len(index.Entries))
+	roll_back_index.Path = index.Path
+	roll_back_index.WorkPath = index.WorkPath
+	return roll_back_index
 }
 
 func (index *Index) ToFile() error {

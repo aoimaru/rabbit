@@ -26,7 +26,7 @@ func (c *Client) GetHeadHash() (string, error) {
 		reference = strings.Replace(reference, "\n", "", -1)
 		reference = strings.Replace(reference, "ref: ", "", 1)
 		reference = strings.Replace(reference, ":", "", 1)
-		tatched_reference_path := c.RepoPath + reference
+		tatched_reference_path := c.RepoPath + "/" + reference
 		tatched_buffer, _ := GetFileBuffer(tatched_reference_path)
 		return string(tatched_buffer), nil
 	} else {
@@ -60,5 +60,24 @@ func (c *Client) UpdateRef(refs string, hash string) error {
 	}
 	_, _ = CreateFile(refs_path, []byte(hash))
 
+	return nil
+}
+
+func (c *Client) CreateRef(branch_name string, hash string) error {
+	refs_path := c.RepoPath + "/refs/heads/" + branch_name
+	if _, err := os.Stat(refs_path); err == nil {
+		return errors.New("branch is exist")
+	}
+	CreateFile(refs_path, []byte(hash))
+
+	return nil
+}
+
+func (c *Client) SwitchRef(branch_name string, hash string) error {
+	refs_path := c.RepoPath + "/refs/heads/" + branch_name
+	if _, err := os.Stat(refs_path); err != nil {
+		return errors.New("branch is not exist")
+	}
+	CreateFile(c.HeadPath, []byte("ref: refs/heads/"+branch_name))
 	return nil
 }

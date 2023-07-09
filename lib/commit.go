@@ -48,7 +48,7 @@ func (c *Client) CreateCommitObject(message string, hash string) Commit {
 
 }
 
-func (commit *Commit) ToFile() {
+func (commit *Commit) ToFile() (string, error) {
 	buffer := make([]byte, 0)
 	buffer = append(buffer, []byte("commit 199")...)
 	buffer = append(buffer, 0)
@@ -85,4 +85,5 @@ func (commit *Commit) ToFile() {
 
 	_, _ = CreateFile(object_path, compressed_buffer)
 
+	return hash, nil
 }

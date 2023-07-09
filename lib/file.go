@@ -5,6 +5,7 @@ import (
 	"compress/zlib"
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -45,6 +46,20 @@ func Compress(buffer []byte) []byte {
 	zlib_writer.Write(buffer)
 	zlib_writer.Close()
 	return compressed.Bytes()
+}
+
+func Extract(buffer []byte) ([]byte, error) {
+	extracting_buffer := bytes.NewBuffer(buffer)
+	zr, err := zlib.NewReader(extracting_buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	extracted_buffer, err := ioutil.ReadAll(zr)
+	if err != nil {
+		return nil, err
+	}
+	return extracted_buffer, nil
 }
 
 func CreateHash(buffer []byte) string {
@@ -96,5 +111,35 @@ func (c *Client) WalkingDir() ([]string, error) {
 		return nil, err
 	}
 	return paths, nil
+}
+
+func (index *Index) RollBackWorkingTree() {
+
+	for _, entry := range index.Entries {
+		fmt.Println("entry.Name", entry.Name)
+		hash := entry.Hash
+		object_path := index.WorkPath + "/.rabbit/objects/" + hash[:2] + "/" + hash[2:]
+		buffer, _ := GetFileBuffer(object_path)
+		extracted_buffer, _ := Extract(buffer)
+		lines := ToRabbitLines(extracted_buffer)
+		context_buffer := lines[1]
+		file_path := index.WorkPath + "/" + entry.Name
+		CreateFile(file_path, []byte(context_buffer))
+	}
+
+	err := filepath.Walk(index.WorkPath, func(path string, info os.FileInfo, err error) error {
+		rel_path, err := filepath.Rel(index.WorkPath, path)
+		if info.IsDir() {
+			if strings.HasPrefix(rel_path, ".rabbit") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		fmt.Println(path)
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
 
 }

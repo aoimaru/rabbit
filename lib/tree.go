@@ -2,8 +2,11 @@ package lib
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"syscall"
 )
 
 const NUM_OF_MIN_CHILD_CHILDREN = 0
@@ -54,6 +57,8 @@ func (index *Index) CreateNodes() (*Node, error) {
 					ID:   layer_name,
 					Name: strings.Replace(layer_name, "root/", "", 1),
 				}
+				layer_name = strings.Replace(layer_name, "root/", "", 1)
+				// fmt.Println("layer_name:", layer_name)
 				if layer_name == entry.Name {
 					unique.Hash = entry.Hash
 					unique.Type = "blob"
@@ -74,6 +79,7 @@ func (index *Index) CreateNodes() (*Node, error) {
 		if unique.Type == "blob" {
 			node.Hash = unique.Hash
 		}
+		// fmt.Printf("node:%+v\n", node)
 		nodes = append(nodes, &node)
 	}
 
@@ -107,6 +113,7 @@ func (c *Client) WriteTree(node *Node) string {
 	for _, child_node := range node.Children {
 		child_node_buffer := make([]byte, 0)
 		child_node_buffer = append(child_node_buffer, 0)
+		fmt.Printf("child_node:%+v\n", child_node)
 		if child_node.Type == "blob" {
 			child_node_buffer = append(child_node_buffer, []byte("blob"+" ")...)
 			child_node_buffer = append(child_node_buffer, []byte(child_node.Name+" ")...)
@@ -126,4 +133,84 @@ func (c *Client) WriteTree(node *Node) string {
 	_ = CreateDir(object_dir)
 	_, _ = CreateFile(object_path, compressed_buffer)
 	return hash
+}
+
+type Column struct {
+	Type string
+	Name string
+	Hash string
+	Path string
+}
+
+type Tree struct {
+	Size    int
+	Columns []Column
+}
+
+func (c *Client) GetTreeObject(hash string) (Tree, error) {
+	// fmt.Println("Recursion")
+	object_path := c.RepoPath + "/objects/" + hash[:2] + "/" + hash[2:]
+	buffer, _ := GetFileBuffer(object_path)
+	extracted_buffer, _ := Extract(buffer)
+	lines := ToRabbitLines(extracted_buffer)
+	tree := Tree{}
+	for _, line := range lines[1:] {
+		tmp := strings.Split(line, " ")
+		column := Column{
+			Type: tmp[0],
+			Name: tmp[1],
+			Hash: tmp[2],
+			Path: c.WorkPath + "/" + tmp[1],
+		}
+		tree.Columns = append(tree.Columns, column)
+	}
+	return tree, nil
+}
+
+func (c *Client) WalkingTree(hash string, blob_columns []Column) []Column {
+	tree, _ := c.GetTreeObject(hash)
+	// fmt.Printf("tree:%+v\n", tree)
+
+	for _, column := range tree.Columns {
+		if column.Type == "tree" {
+			blob_columns = append(blob_columns, c.WalkingTree(column.Hash, blob_columns)...)
+		} else {
+			blob_column := Column{Type: column.Type, Name: column.Name, Hash: column.Hash, Path: column.Path}
+			blob_columns = append(blob_columns, blob_column)
+		}
+	}
+	return blob_columns
+}
+
+func (col *Column) ToEntry() (Entry, error) {
+	file_path := col.Path
+	var system_call syscall.Stat_t
+	syscall.Stat(file_path, &system_call)
+
+	file_info, err := os.Stat(file_path)
+	if err != nil {
+		return Entry{}, err
+	}
+
+	oct := fmt.Sprintf("%o", uint32(system_call.Mode))
+	mode_number, err := strconv.ParseUint(oct, 10, 32)
+	if err != nil {
+		return Entry{}, err
+	}
+	mode := uint32(mode_number)
+
+	entry := Entry{
+		CTime: file_info.ModTime(),
+		MTime: file_info.ModTime(),
+		Dev:   uint32(system_call.Dev),
+		Inode: uint32(system_call.Ino),
+		Mode:  mode,
+		Uid:   system_call.Uid,
+		Gid:   system_call.Gid,
+		Size:  uint32(system_call.Size),
+		Hash:  col.Hash,
+		Name:  col.Name,
+	}
+
+	return entry, nil
 }

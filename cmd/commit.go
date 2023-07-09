@@ -29,9 +29,9 @@ to quickly create a Cobra application.`,
 		node, _ := index.CreateNodes()
 		hash := client.WriteTree(node)
 		commit := client.CreateCommitObject(message, hash)
-		commit.ToFile()
+		commit_hash, _ := commit.ToFile()
 		refs := client.GetHeadRef()
-		err := client.UpdateRef(refs, hash)
+		err := client.UpdateRef(refs, commit_hash)
 		if err != nil {
 			fmt.Println(err)
 		}
