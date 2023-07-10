@@ -172,16 +172,18 @@ func (index *Index) UpdateIndex(name string, hash string) (Index, error) {
 func (index *Index) RollBackIndex(blob_columns []Column) Index {
 	var roll_back_index Index
 	for _, blob_column := range blob_columns {
+		fmt.Printf("<<RollBackIndex:Before>>:%+v\n", blob_column)
 		entry, err := blob_column.ToEntry()
 		if err != nil {
-			continue
+			// continue
+			entry, _ = blob_column.ToNewEntry()
 		}
-		// fmt.Printf("%+v\n", entry)
+		fmt.Printf("<<RollBackIndex:After>>:%+v\n", entry)
 		roll_back_index.Entries = append(roll_back_index.Entries, entry)
 	}
 	roll_back_index.Dirc = "DIRC"
 	roll_back_index.Version = 2
-	roll_back_index.Number = uint32(len(index.Entries))
+	roll_back_index.Number = uint32(len(roll_back_index.Entries))
 	roll_back_index.Path = index.Path
 	roll_back_index.WorkPath = index.WorkPath
 	return roll_back_index

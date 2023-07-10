@@ -5,7 +5,6 @@ import (
 	"compress/zlib"
 	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -121,7 +120,7 @@ func (index *Index) RollBackWorkingTree(working_paths []string) {
 	}
 
 	for _, entry := range index.Entries {
-		fmt.Println("entry.Name", entry.Name)
+		// fmt.Println("entry.Name", entry.Name)
 		if entry.Name == "" {
 			continue
 		}

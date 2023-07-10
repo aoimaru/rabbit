@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -113,7 +114,7 @@ func (c *Client) WriteTree(node *Node) string {
 	for _, child_node := range node.Children {
 		child_node_buffer := make([]byte, 0)
 		child_node_buffer = append(child_node_buffer, 0)
-		fmt.Printf("child_node:%+v\n", child_node)
+		// fmt.Printf("child_node:%+v\n", child_node)
 		if child_node.Type == "blob" {
 			child_node_buffer = append(child_node_buffer, []byte("blob"+" ")...)
 			child_node_buffer = append(child_node_buffer, []byte(child_node.Name+" ")...)
@@ -184,6 +185,45 @@ func (c *Client) WalkingTree(hash string, blob_columns []Column) []Column {
 
 func (col *Column) ToEntry() (Entry, error) {
 	file_path := col.Path
+	var system_call syscall.Stat_t
+	syscall.Stat(file_path, &system_call)
+
+	file_info, err := os.Stat(file_path)
+	if err != nil {
+		return Entry{}, err
+	}
+
+	oct := fmt.Sprintf("%o", uint32(system_call.Mode))
+	mode_number, err := strconv.ParseUint(oct, 10, 32)
+	if err != nil {
+		return Entry{}, err
+	}
+	mode := uint32(mode_number)
+
+	entry := Entry{
+		CTime: file_info.ModTime(),
+		MTime: file_info.ModTime(),
+		Dev:   uint32(system_call.Dev),
+		Inode: uint32(system_call.Ino),
+		Mode:  mode,
+		Uid:   system_call.Uid,
+		Gid:   system_call.Gid,
+		Size:  uint32(system_call.Size),
+		Hash:  col.Hash,
+		Name:  col.Name,
+	}
+
+	return entry, nil
+}
+
+func (col *Column) ToNewEntry() (Entry, error) {
+	file_path := col.Path
+
+	/** SATD: 強引策 */
+	file_dir, _ := filepath.Split(file_path)
+	_ = CreateDir(file_dir)
+	_, err := CreateFile(file_path, []byte("init"))
+
 	var system_call syscall.Stat_t
 	syscall.Stat(file_path, &system_call)
 

@@ -27,8 +27,15 @@ to quickly create a Cobra application.`,
 
 		// 指定してブランチのリファレンスから, そのブランチのハッシュを取得
 		hash, err := client.GetBranchHash(branch_name)
+		fmt.Println("branch:", branch_name, "hash:", hash)
 		if err != nil {
 			fmt.Println(err)
+			return
+		}
+
+		ref := client.GetHeadRef()
+		if "refs/heads/"+branch_name == ref {
+			fmt.Println("is here")
 			return
 		}
 
@@ -36,10 +43,15 @@ to quickly create a Cobra application.`,
 		commit := client.GetCommitObject(hash)
 		fmt.Printf("commit:%+v\n", commit)
 		tree_hash := commit.Tree
+		fmt.Println("tree_hash:", tree_hash)
 
 		// ツリーオブジェクトのハッシュから紐づいているblobオブジェクトのリストを作成(blob_columns)
 		init_columns := make([]lib.Column, 0)
 		blob_columns := client.WalkingTree(tree_hash, init_columns)
+
+		// for _, blob_column := range blob_columns {
+		// 	fmt.Printf("blob:%+v\n", blob_column)
+		// }
 
 		// インデックスファイルを取得して, オブジェクトに変換
 		buffer, _ := lib.GetFileBuffer(client.IndexPath)
