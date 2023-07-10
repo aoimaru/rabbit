@@ -34,6 +34,15 @@ func (c *Client) GetHeadHash() (string, error) {
 	}
 }
 
+func (c *Client) GetBranchHash(branch_name string) (string, error) {
+	file_path := c.RepoPath + "/refs/heads/" + branch_name
+	hash_buffer, err := GetFileBuffer(file_path)
+	if err != nil {
+		return "", err
+	}
+	return string(hash_buffer), nil
+}
+
 func (c *Client) GetHeadRef() string {
 	buffer, _ := GetFileBuffer(c.HeadPath)
 	reference := string(buffer)
@@ -73,7 +82,7 @@ func (c *Client) CreateRef(branch_name string, hash string) error {
 	return nil
 }
 
-func (c *Client) SwitchRef(branch_name string, hash string) error {
+func (c *Client) SwitchRef(branch_name string) error {
 	refs_path := c.RepoPath + "/refs/heads/" + branch_name
 	if _, err := os.Stat(refs_path); err != nil {
 		return errors.New("branch is not exist")

@@ -24,12 +24,20 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		message, _ := cmd.Flags().GetString("message")
 		client := lib.CreateClient()
+
+		// インデックスファイルをオブジェクトとして取得
 		index_buffer, _ := lib.GetFileBuffer(client.IndexPath)
 		index, _ := client.GetIndexObject(index_buffer)
+
+		// write-treeを実行する -> treeオブジェクトのrootのハッシュが返却される
 		node, _ := index.CreateNodes()
 		hash := client.WriteTree(node)
+
+		// write-treeで返却されたハッシュとmessageを元にcommitオブジェクトを作成
 		commit := client.CreateCommitObject(message, hash)
 		commit_hash, _ := commit.ToFile()
+
+		// コミットオブジェクトのハッシュを元にrefs/heads/現在のブランチのハッシュを書き換える
 		refs := client.GetHeadRef()
 		err := client.UpdateRef(refs, commit_hash)
 		if err != nil {

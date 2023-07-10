@@ -172,7 +172,10 @@ func (index *Index) UpdateIndex(name string, hash string) (Index, error) {
 func (index *Index) RollBackIndex(blob_columns []Column) Index {
 	var roll_back_index Index
 	for _, blob_column := range blob_columns {
-		entry, _ := blob_column.ToEntry()
+		entry, err := blob_column.ToEntry()
+		if err != nil {
+			continue
+		}
 		// fmt.Printf("%+v\n", entry)
 		roll_back_index.Entries = append(roll_back_index.Entries, entry)
 	}
@@ -249,8 +252,6 @@ func (index *Index) ToFile() error {
 		buffer = append(buffer, padding_buffer...)
 
 	}
-
-	// fmt.Println("buffer:", buffer)
 
 	index_path := index.Path
 	_, err := CreateFile(index_path, buffer)

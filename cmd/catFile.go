@@ -24,13 +24,15 @@ to quickly create a Cobra application.`,
 		// tree, _ := client.GetTreeObject("cbddda25bf86bb669870dd9a0a740e443a26d20c")
 		// fmt.Printf("%+v\n", tree)
 		hash := "797e800b94ac0b595db4b8259d88ab23addc3fee"
+
 		init_columns := make([]lib.Column, 0)
 		blob_columns := client.WalkingTree(hash, init_columns)
 		buffer, _ := lib.GetFileBuffer(client.IndexPath)
 		index, _ := client.GetIndexObject(buffer)
 		roll_back_index := index.RollBackIndex(blob_columns)
-		// roll_back_index.ToFile()
-		roll_back_index.RollBackWorkingTree()
+		roll_back_index.ToFile()
+		working_paths, _ := client.WalkingDir()
+		roll_back_index.RollBackWorkingTree(working_paths)
 	},
 }
 

@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -16,13 +17,15 @@ type Sign struct {
 }
 
 type Commit struct {
-	Size      int
-	Tree      string
-	Parents   []Parent
-	Author    Sign
-	Committer Sign
-	Message   string
-	RepoPath  string
+	Size          int
+	Tree          string
+	Parents       []Parent
+	Author        Sign
+	Committer     Sign
+	Message       string
+	RepoPath      string
+	AuthorLine    string
+	CommitterLine string
 }
 
 func (c *Client) CreateCommitObject(message string, hash string) Commit {
@@ -86,4 +89,31 @@ func (commit *Commit) ToFile() (string, error) {
 	_, _ = CreateFile(object_path, compressed_buffer)
 
 	return hash, nil
+}
+
+func (c *Client) GetCommitObject(hash string) Commit {
+	object_path := c.RepoPath + "/objects/" + hash[:2] + "/" + hash[2:]
+	buffer, _ := GetFileBuffer(object_path)
+	extracted_buffer, _ := Extract(buffer)
+	lines := ToRabbitLines(extracted_buffer)
+	var commit Commit
+
+	parent_line := lines[1]
+	tree_line := lines[2]
+	author_line := lines[3]
+	committer_line := lines[4]
+	message_line := lines[5]
+
+	for _, parent_hash := range strings.Split(parent_line, " ")[1:] {
+		parent := Parent{Hash: parent_hash}
+		commit.Parents = append(commit.Parents, parent)
+	}
+	commit.Tree = strings.Split(tree_line, " ")[1]
+	commit.AuthorLine = author_line
+	commit.CommitterLine = committer_line
+
+	commit.Message = message_line
+
+	return commit
+
 }

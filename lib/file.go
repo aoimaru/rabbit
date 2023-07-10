@@ -113,10 +113,13 @@ func (c *Client) WalkingDir() ([]string, error) {
 	return paths, nil
 }
 
-func (index *Index) RollBackWorkingTree() {
+func (index *Index) RollBackWorkingTree(working_paths []string) {
 
 	for _, entry := range index.Entries {
 		fmt.Println("entry.Name", entry.Name)
+		if entry.Name == "" {
+			continue
+		}
 		hash := entry.Hash
 		object_path := index.WorkPath + "/.rabbit/objects/" + hash[:2] + "/" + hash[2:]
 		buffer, _ := GetFileBuffer(object_path)
@@ -127,19 +130,21 @@ func (index *Index) RollBackWorkingTree() {
 		CreateFile(file_path, []byte(context_buffer))
 	}
 
-	err := filepath.Walk(index.WorkPath, func(path string, info os.FileInfo, err error) error {
-		rel_path, err := filepath.Rel(index.WorkPath, path)
-		if info.IsDir() {
-			if strings.HasPrefix(rel_path, ".rabbit") {
-				return filepath.SkipDir
-			}
-			return nil
+	for _, working_path := range working_paths {
+		if !IsTracked(working_path, index.Entries) {
+			file_path := index.WorkPath + "/" + working_path
+			// fmt.Println(file_path)
+			os.Remove(file_path)
 		}
-		fmt.Println(path)
-		return nil
-	})
-	if err != nil {
-		fmt.Println(err)
 	}
 
+}
+
+func IsTracked(working_path string, entries []Entry) bool {
+	for _, entry := range entries {
+		if working_path == entry.Name {
+			return true
+		}
+	}
+	return false
 }
