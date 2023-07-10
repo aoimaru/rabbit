@@ -115,6 +115,11 @@ func (c *Client) WalkingDir() ([]string, error) {
 
 func (index *Index) RollBackWorkingTree(working_paths []string) {
 
+	for _, working_path := range working_paths {
+		file_path := index.WorkPath + "/" + working_path
+		os.Remove(file_path)
+	}
+
 	for _, entry := range index.Entries {
 		fmt.Println("entry.Name", entry.Name)
 		if entry.Name == "" {
@@ -130,13 +135,13 @@ func (index *Index) RollBackWorkingTree(working_paths []string) {
 		CreateFile(file_path, []byte(context_buffer))
 	}
 
-	for _, working_path := range working_paths {
-		if !IsTracked(working_path, index.Entries) {
-			file_path := index.WorkPath + "/" + working_path
-			// fmt.Println(file_path)
-			os.Remove(file_path)
-		}
-	}
+	// for _, working_path := range working_paths {
+	// 	if !IsTracked(working_path, index.Entries) {
+	// 		file_path := index.WorkPath + "/" + working_path
+	// 		// fmt.Println(file_path)
+	// 		os.Remove(file_path)
+	// 	}
+	// }
 
 }
 

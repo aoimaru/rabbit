@@ -92,10 +92,14 @@ func (commit *Commit) ToFile() (string, error) {
 }
 
 func (c *Client) GetCommitObject(hash string) Commit {
+	if len([]byte(hash)) <= 0 {
+		return Commit{}
+	}
 	object_path := c.RepoPath + "/objects/" + hash[:2] + "/" + hash[2:]
 	buffer, _ := GetFileBuffer(object_path)
 	extracted_buffer, _ := Extract(buffer)
 	lines := ToRabbitLines(extracted_buffer)
+
 	var commit Commit
 
 	parent_line := lines[1]
@@ -116,4 +120,23 @@ func (c *Client) GetCommitObject(hash string) Commit {
 
 	return commit
 
+}
+
+func (c *Client) WalkingCommit(hash string) {
+	commit := c.GetCommitObject(hash)
+	fmt.Println("Hash     :", hash)
+	fmt.Println("Tree     :", commit.Tree)
+	fmt.Println("Parent   :", commit.Parents)
+	fmt.Println("Author   :", commit.AuthorLine)
+	fmt.Println("committer:", commit.CommitterLine)
+	fmt.Println("message  :", commit.Message)
+	fmt.Println()
+	fmt.Println()
+	if len(commit.Parents) <= 0 {
+		return
+	}
+	for _, parent_hash := range commit.Parents {
+		// fmt.Println([]byte(parent_hash.Hash))
+		c.WalkingCommit(parent_hash.Hash)
+	}
 }
