@@ -1,14 +1,39 @@
 package lib
 
 import (
+	"os"
 	"testing"
 )
 
 func TestClient(t *testing.T) {
-	client := CreateClient()
+	currentDir, _ := os.Getwd()
+	client := CreateClient(currentDir)
 
-	if client.WorkPath != "/home/aoimaru/document/go_project/CLI/rabbit/lib" {
-		t.Errorf("Unexpected WorkPath value: %s", client.WorkPath)
+	t.Run("local path", func(t *testing.T) {
+		want := "/Users/haradakanon/Desktop/rabbit/lib"
+		assertLocalPath(t, client, want)
+	})
+
+	t.Run("local repository", func(t *testing.T) {
+		want := "/Users/haradakanon/Desktop/rabbit/lib/.rabbit"
+		assertLocalRepo(t, client, want)
+	})
+}
+
+// assertLocalPath は実行者のローカルPCの絶対パスと一致しているかチェックする.
+func assertLocalPath(t *testing.T, got Client, want string) {
+	t.Helper()
+
+	if got.GetWorkPath() != want {
+		t.Errorf("Unexpected WorkPath value: %s", got.WorkPath)
 	}
+}
 
+// assertLocalRepo は実行者のローカルPCの絶対パスと一致しているかチェックする.
+func assertLocalRepo(t *testing.T, got Client, want string) {
+	t.Helper()
+
+	if got.GetRepoPath() != want {
+		t.Errorf("Unexpected WorkPath value: %s", got.RepoPath)
+	}
 }
