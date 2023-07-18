@@ -8,24 +8,22 @@ func (c *Client) Init() error {
 	if _, err := os.Stat(c.RepoPath); err == nil {
 		_ = os.RemoveAll(c.RepoPath)
 	}
-	if err := os.MkdirAll(c.RepoPath, os.ModePerm); err != nil {
-		return err
+
+	// init時に生成するファイル名の配列.
+	initArray := []string{"", "/objects", "/refs", "/refs/heads"}
+	for _, value := range initArray {
+		err := CreateDir(c.RepoPath + value)
+		if err != nil {
+			return err
+		}
 	}
 
-	if err := os.MkdirAll(c.RepoPath+"/objects", os.ModePerm); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(c.RepoPath+"/refs", os.ModePerm); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(c.RepoPath+"/refs/heads", os.ModePerm); err != nil {
-		return err
-	}
-	init_head_buffer := []byte("ref: refs/heads/master\n")
-	_, _ = CreateFile(c.HeadPath, init_head_buffer)
+	// TODO ここもまとめますか?
+	initHeadBuffer := []byte("ref: refs/heads/main\n")
+	_, _ = CreateFile(c.HeadPath, initHeadBuffer)
 
-	init_refs_heads_master_buffer := []byte("")
-	_, _ = CreateFile(c.RepoPath+"/refs/heads/master", init_refs_heads_master_buffer)
+	initRefsHeadsMainBuffer := []byte("")
+	_, _ = CreateFile(c.RepoPath+"/refs/heads/main", initRefsHeadsMainBuffer)
 
 	return nil
 }

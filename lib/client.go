@@ -1,14 +1,11 @@
 package lib
 
-import "os"
-
-func CreateClient() Client {
-	curent_dir, _ := os.Getwd()
+func CreateClient(currentDir string) Client {
 	return Client{
-		WorkPath:  curent_dir,
-		RepoPath:  curent_dir + "/.rabbit",
-		IndexPath: curent_dir + "/.rabbit/index",
-		HeadPath:  curent_dir + "/.rabbit/HEAD",
+		WorkPath:  currentDir,
+		RepoPath:  currentDir + "/.rabbit",
+		IndexPath: currentDir + "/.rabbit/index",
+		HeadPath:  currentDir + "/.rabbit/HEAD",
 	}
 }
 
